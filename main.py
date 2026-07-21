@@ -1,13 +1,13 @@
 import pygame
 
-from primiengine import Log, Assets, Render, Actors
+from primiengine import Log, Assets, Render, Actors, Collision
 from player import Player
 
 
 def main():
 
     pygame.init()
-
+    
     screen = pygame.display.set_mode(
         (800, 600)
     )
@@ -16,6 +16,7 @@ def main():
     Actors.init()
 
     log = Log.get("main")
+    Log.disable_console()
 
     log.info("Engine starting")
 
@@ -24,47 +25,49 @@ def main():
         "player",
         "assets/player.png"
     )
-
-    # Spawn outside the loop
-    Actors.spawn(
-        Player,
-        texture=Assets.get("player"),
-        position=(400, 300),
-        speed=1000
-    )
-    Actors.spawn(
-        Player,
-        texture=Assets.get("player"),
-        position=(600, 300),
-        speed=1000
-    )
     Actors.spawn(
         Player,
         texture=Assets.get("player"),
         position=(200, 300),
-        speed=-1000
+        speed= 200
     )
     Actors.spawn(
         Player,
         texture=Assets.get("player"),
         position=(400, 300),
-        speed=1000
+        speed=-100
+    )
+    Actors.spawn(
+        Player,
+        texture=Assets.get("player"),
+        position=(100, 300),
+        speed= 100
+    )
+    Actors.spawn(
+        Player,
+        texture=Assets.get("player"),
+        position=(100, 100),
+        speed=-100
     )
 
     clock = pygame.time.Clock()
 
-    clock.tick(60)
     running = True
 
     while running:
+
+        dt = clock.tick(60)
 
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
                 running = False
 
-        Render.present()
+        Assets.update()
+        Actors.update(dt)
+        Collision.update()
 
+        Render.present()
     Actors.close()
     Render.close()
     Log.close()

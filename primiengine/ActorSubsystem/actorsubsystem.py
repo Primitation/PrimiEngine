@@ -1,6 +1,6 @@
 import threading
-import pygame
 from typing import TypeVar, Type
+from primiengine import Log
 
 
 class Event:
@@ -28,7 +28,11 @@ class Actor:
     update()."""
 
     def __init__(self):
+
         self.alive = True
+
+        self.logger = Log.get(self.__class__.__name__)
+
         Actors.add(self)
 
     def update(self, dt):
@@ -39,34 +43,28 @@ T = TypeVar("T", bound=Actor)
 
 
 class ActorSubsystem:
+    """Ticks every registered actor once per frame. Deliberately NOT
+    thread-driven: actors touch pygame-derived state (sprite
+    position, rects that Render/Collision read straight after),
+    so ticking has to happen on the main thread, in step with
+    everything else that reads that state."""
 
     def __init__(self):
 
         self._actors = []
         self._lock = threading.Lock()
 
-        self._clock = pygame.time.Clock()
-        self._fps = 60
-
-        self._running = False
-        self._thread = None
-
         self.tick = Event()
 
-    def init(self, fps: int = 60):
-        """Call once, at startup, to start the actor update thread."""
-
-        self._fps = fps
-
-        self._running = True
-
-        self._thread = threading.Thread(target=self._run, daemon=True)
-        self._thread.start()
+    def init(self):
+        """Call once, at startup. Kept for API symmetry with the
+        other subsystems — there's no thread to spin up anymore."""
+        pass
 
     def add(self, actor: Actor):
-        """Thread-safe: call this from wherever your game logic
-        lives, it doesn't have to be the actor thread. Subscribes
-        the actor's update() to the tick event."""
+        """Registers the actor and subscribes its update() to the
+        tick event. Thread-safe on the registration itself, even
+        though ticking happens on the main thread."""
 
         with self._lock:
             self._actors.append(actor)
@@ -81,26 +79,23 @@ class ActorSubsystem:
 
         self.tick.unsubscribe(actor.update)
 
-    def _run(self):
+    def update(self, dt):
+        """Call once per frame from the main loop, passing the same
+        dt (in ms) you got from clock.tick(). Ticks every actor,
+        then cleans up anything that marked itself not alive during
+        this tick."""
 
-        while self._running:
+        self.tick.emit(dt)
 
-            dt = self._clock.tick(self._fps)
+        with self._lock:
+            dead = [actor for actor in self._actors if not actor.alive]
 
-            self.tick.emit(dt)
-
-            with self._lock:
-                dead = [a for a in self._actors if not a.alive]
-
-            for actor in dead:
-                self.remove(actor)
+        for actor in dead:
+            self.remove(actor)
 
     def close(self):
-
-        self._running = False
-
-        if self._thread:
-            self._thread.join()
+        """Kept for API symmetry — nothing to shut down anymore."""
+        pass
 
     def spawn(
         self,
