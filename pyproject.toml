@@ -1,0 +1,21 @@
+[tool.mypy]
+exclude = "^(\\.venv)/"
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["primiengine", "primiengine.*"]
+
+[project]
+name = "primiengine"
+version = "1.0.0"
+description = "A reusable pygame addon"
+authors = [
+    {name = "primitation"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pygame>=1.9"
+]
