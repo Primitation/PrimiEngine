@@ -4,7 +4,7 @@ import queue
 import traceback
 from abc import ABC, abstractmethod
 
-from ..LogSubsytem import Log
+from ..LogSubsystem.logsubsystem import Log
 
 
 class AssetLoader(ABC):
@@ -30,7 +30,18 @@ class AssetLoader(ABC):
         return raw
 
 
+class Texture:
+    """Minimal wrapper so a loaded image has the `.surface`
+    attribute Sprite.transform() expects."""
+
+    def __init__(self, surface):
+        self.surface = surface
+
+
 class TextureLoader(AssetLoader):
+    """Wraps the loaded surface in a small object with a `.surface`
+    attribute, since that's what Sprite.transform() expects — not
+    a bare pygame.Surface."""
 
     def can_load(self, path):
         return path.lower().endswith((".png", ".jpg", ".jpeg", ".bmp"))
@@ -39,7 +50,7 @@ class TextureLoader(AssetLoader):
         return pygame.image.load(path)
 
     def finalize(self, raw):
-        return raw.convert_alpha()
+        return Texture(raw.convert_alpha())
 
 
 class SoundLoader(AssetLoader):

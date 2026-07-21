@@ -52,7 +52,7 @@ printf "$(RESET)\n";
 VENV := .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
-MAIN := TODO
+MAIN := main.py
 PACKAGE := primiengine
 
 # **************************************************************************** #
