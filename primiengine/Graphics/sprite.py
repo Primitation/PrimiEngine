@@ -17,7 +17,13 @@ class Sprite:
         self.visible = True
 
     def transform(self):
-        image = self.texture.surface
+        # texture is normally a Texture wrapper (has .surface), but a
+        # raw pygame.Surface is also accepted directly — e.g. frames
+        # coming straight out of Animation.frame() / Atlas.get().
+        if hasattr(self.texture, "surface"):
+            image = self.texture.surface
+        else:
+            self.texture
         width, height = image.get_size()
 
         image = pygame.transform.scale(
