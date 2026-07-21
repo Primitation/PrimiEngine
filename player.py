@@ -1,5 +1,6 @@
 import pygame
 from primiengine import Actor, Render
+from primiengine.Graphics.sprite import Sprite
 
 
 class Player(Actor):
@@ -25,8 +26,6 @@ class Player(Actor):
         self._create_sprite()
 
     def _create_sprite(self):
-
-        from primiengine.sprite import Sprite
 
         self.sprite = Sprite(
             self.texture,

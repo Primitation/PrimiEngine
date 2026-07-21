@@ -30,7 +30,25 @@ def main():
         Player,
         texture=Assets.get("player"),
         position=(400, 300),
-        speed=250
+        speed=1000
+    )
+    Actors.spawn(
+        Player,
+        texture=Assets.get("player"),
+        position=(600, 300),
+        speed=1000
+    )
+    Actors.spawn(
+        Player,
+        texture=Assets.get("player"),
+        position=(200, 300),
+        speed=-1000
+    )
+    Actors.spawn(
+        Player,
+        texture=Assets.get("player"),
+        position=(400, 300),
+        speed=1000
     )
 
     clock = pygame.time.Clock()
