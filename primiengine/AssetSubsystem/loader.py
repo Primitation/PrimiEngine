@@ -29,6 +29,14 @@ class AssetLoader(ABC):
         display or mixer (convert_alpha, Sound, etc)."""
         return raw
 
+    def placeholder(self):
+        """Fallback asset handed back when load()/finalize() raises,
+        so a bad path degrades gracefully instead of crashing or
+        leaving a name stuck pending forever. Override to return
+        something type-appropriate (a checkerboard texture, a
+        silent sound, etc). Returns None by default."""
+        return None
+
 
 class Texture:
     """Minimal wrapper so a loaded image has the `.surface`
@@ -52,6 +60,23 @@ class TextureLoader(AssetLoader):
     def finalize(self, raw):
         return Texture(raw.convert_alpha())
 
+    def placeholder(self):
+        """Classic magenta/black 'missing texture' checkerboard."""
+
+        size = 64
+        tile = 8
+
+        surface = pygame.Surface((size, size)).convert_alpha()
+        magenta = (255, 0, 255)
+        black = (0, 0, 0)
+
+        for y in range(0, size, tile):
+            for x in range(0, size, tile):
+                color = magenta if (x // tile + y // tile) % 2 == 0 else black
+                surface.fill(color, (x, y, tile, tile))
+
+        return Texture(surface)
+
 
 class SoundLoader(AssetLoader):
 
@@ -63,6 +88,15 @@ class SoundLoader(AssetLoader):
 
     def finalize(self, raw):
         return pygame.mixer.Sound(raw)
+
+    def placeholder(self):
+        """A silent sound, so a missing/broken audio file just plays
+        nothing instead of crashing the game."""
+
+        try:
+            return pygame.mixer.Sound(buffer=b"\x00\x00" * 100)
+        except Exception:
+            return None
 
 
 class AssetManager:
@@ -111,7 +145,14 @@ class AssetManager:
             return cached
 
         loader = self._find_loader(path)
-        asset = loader.finalize(loader.load(path))
+
+        try:
+            asset = loader.finalize(loader.load(path))
+        except Exception as error:
+            self._logger.error(
+                f"Failed to load {path}: {error}\n{traceback.format_exc()}"
+            )
+            asset = loader.placeholder()
 
         with self._lock:
             self._assets[name] = asset
@@ -174,6 +215,13 @@ class AssetManager:
 
             if error is not None:
                 self._logger.error(f"Failed to load {path}: {error}\n{tb}")
+                asset = loader.placeholder()
+
+                with self._lock:
+                    self._cache[path] = asset
+                    for name in names:
+                        self._assets[name] = asset
+
                 continue
 
             try:
@@ -183,7 +231,7 @@ class AssetManager:
                     f"Failed to finalize {path}: {error}\n"
                     f"{traceback.format_exc()}"
                 )
-                continue
+                asset = loader.placeholder()
 
             with self._lock:
                 self._cache[path] = asset
