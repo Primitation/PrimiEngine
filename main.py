@@ -35,6 +35,7 @@ def main():
 
     clock = pygame.time.Clock()
 
+    clock.tick(60)
     running = True
 
     while running:
@@ -45,8 +46,6 @@ def main():
                 running = False
 
         Render.present()
-
-        clock.tick(60)
 
     Actors.close()
     Render.close()
